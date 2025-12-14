@@ -473,7 +473,6 @@ static std::wstring utf8_to_wide(const char *utf8) {
     return wstr;
 }
 
-#ifdef _WIN32
 HL_PRIM void HL_NAME(registerFontFromPath)(vstring *fontPath)
 {
     //std::cout << "Hello world:" << std::endl;
@@ -484,10 +483,11 @@ HL_PRIM void HL_NAME(registerFontFromPath)(vstring *fontPath)
     AddFontResourceEx(path, FR_PRIVATE, 0);*/
     std::wstring wpath = utf8_to_wide(hl_to_utf8(fontPath->bytes));
     const wchar_t* path = wpath.c_str();
-    std::wcout << path << std::endl;
+    //std::wcout << path << std::endl;
+    printf("OH, FUCK YOU");
 
     std::string utf8name = hl_to_utf8(fontPath->bytes);
-    printf(utf8name.c_str());
+    //printf(utf8name.c_str());
 
     AddFontResourceExW(path, FR_PRIVATE, 0);
 }
@@ -602,21 +602,27 @@ HL_PRIM void HL_NAME(setTitleFont)(vstring *name, int size = 0) {
     
     std::wcout << L"Creating title font: " << wname << L" size: " << size << std::endl;
 
+    // Get the screen DC to calculate proper font size
+    HDC hdc = GetDC(NULL);
+    int logPixelsY = GetDeviceCaps(hdc, LOGPIXELSY);
+    int fontHeight = -MulDiv(size, logPixelsY, 72); // Negative for character height
+    ReleaseDC(NULL, hdc);
+
     titlebar__hTitleFont = CreateFontW(
-        size, 0, 0, 0, FW_MEDIUM, false, false, false,
+        fontHeight,  // Use calculated negative height
+        0, 0, 0, FW_MEDIUM, false, false, false,
         DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
         CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE,
         wname.c_str()
     );
     
-    std::wcout << L"Font handle: " << titlebar__hTitleFont << std::endl;
+    std::wcout << L"Font handle: " << titlebar__hTitleFont << L" height: " << fontHeight << std::endl;
 }
 
 HL_PRIM void HL_NAME(setButtonFont)(vstring *name, int size = 0) {
     if (size == 0)
         size = 10;
 
-    // Delete old font first
     if (titlebar__hButtonFont != nullptr) {
         DeleteObject(titlebar__hButtonFont);
         titlebar__hButtonFont = nullptr;
@@ -624,8 +630,15 @@ HL_PRIM void HL_NAME(setButtonFont)(vstring *name, int size = 0) {
 
     std::wstring wname = utf8_to_wide(hl_to_utf8(name->bytes));
 
+    // Get the screen DC to calculate proper font size
+    HDC hdc = GetDC(NULL);
+    int logPixelsY = GetDeviceCaps(hdc, LOGPIXELSY);
+    int fontHeight = -MulDiv(size, logPixelsY, 72); // Negative for character height
+    ReleaseDC(NULL, hdc);
+
     titlebar__hButtonFont = CreateFontW(
-        size, 0, 0, 0, FW_MEDIUM, false, false, false,
+        fontHeight,  // Use calculated negative height
+        0, 0, 0, FW_MEDIUM, false, false, false,
         DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
         CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE,
         wname.c_str()
@@ -678,32 +691,6 @@ HL_PRIM void HL_NAME(setFrameMargins)(int left, int top, int right, int bottom)
 }
 
 HL_PRIM void HL_NAME(setIconSize)(int size) { titlebar__iconSize = size; }
-
-#else
-
-HL_PRIM void HL_NAME(setButtonWidth)(int width) {}
-HL_PRIM void HL_NAME(setUseButtonText)(bool useButtonText) {}
-HL_PRIM void HL_NAME(setTitlebarColor)(int red, int green, int blue) {}
-HL_PRIM void HL_NAME(setTitleFontColor)(int red, int green, int blue) {}
-HL_PRIM void HL_NAME(setButtonFontColor)(int red, int green, int blue) {}
-HL_PRIM void HL_NAME(setPrimaryButtonColor)(int red, int green, int blue) {}
-HL_PRIM void HL_NAME(setSecondaryButtonColor)(int red, int green, int blue) {}
-HL_PRIM void HL_NAME(setPrimaryButtonHoverColor)(int red, int green, int blue) {}
-HL_PRIM void HL_NAME(setSecondaryButtonHoverColor)(int red, int green, int blue) {}
-HL_PRIM void HL_NAME(setTitlebarImage)(vstring *imagePath) {}
-HL_PRIM void HL_NAME(setPrimaryButtonImage)(vstring *imagePath) {}
-HL_PRIM void HL_NAME(setSecondaryButtonImage)(vstring *imagePath) {}
-HL_PRIM void HL_NAME(setPrimaryButtonHoverImage)(vstring *imagePath) {}
-HL_PRIM void HL_NAME(setSecondaryButtonHoverImage)(vstring *imagePath) {}
-HL_PRIM void HL_NAME(setTitleFont)(vstring *name, int size) {}
-HL_PRIM void HL_NAME(setButtonFont)(vstring *name, int size) {}
-HL_PRIM void HL_NAME(redrawWindow)(_NO_ARGS) {}
-HL_PRIM void HL_NAME(setCenterTitle)(bool centerTitle) {}
-HL_PRIM void HL_NAME(setFrameDimensions)(int left, int top, int right, int bottom) {}
-HL_PRIM void HL_NAME(setZoomedFrameDimensions)(int left, int top, int right, int bottom) {}
-HL_PRIM void HL_NAME(setFrameMargins)(int left, int top, int right, int bottom) {}
-HL_PRIM void HL_NAME(setIconSize)(int size) {}
-#endif
 
 DEFINE_PRIM(_VOID, loadGDI, _NO_ARG)
 DEFINE_PRIM(_VOID, initializeNewWndProc, _NO_ARG)
