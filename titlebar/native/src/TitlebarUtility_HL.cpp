@@ -10,6 +10,7 @@
 
 #include <hl.h>
 #include <string>
+#include <map>
 
 #define UNICODE
 #define _UNICODE
@@ -476,20 +477,9 @@ static std::wstring utf8_to_wide(const char *utf8) {
 #ifdef _WIN32
 HL_PRIM void HL_NAME(registerFontFromPath)(vstring *fontPath)
 {
-    //std::cout << "Hello world:" << std::endl;
-    /*std::wstring wpath = utf8_to_wide(hl_to_utf8(fontPath->bytes));
-    std::wcout << wpath << std::endl;
-    const char* path = wpath.c_str();
-    //std::cout << (LPCSTR)path << std::endl;
-    AddFontResourceEx(path, FR_PRIVATE, 0);*/
     std::wstring wpath = utf8_to_wide(hl_to_utf8(fontPath->bytes));
     const wchar_t* path = wpath.c_str();
-    std::wcout << path << std::endl;
-
-    std::string utf8name = hl_to_utf8(fontPath->bytes);
-    printf(utf8name.c_str());
-
-	AddFontResourceExW(path, FR_PRIVATE, 0);
+    AddFontResourceExW(path, FR_PRIVATE, 0);
 }
 
 HL_PRIM void HL_NAME(setButtonWidth)(int width)
@@ -600,7 +590,7 @@ HL_PRIM void HL_NAME(setTitleFont)(vstring *name, int size = 0) {
 
 	std::wstring wname = utf8_to_wide(hl_to_utf8(name->bytes));
 	
-	std::wcout << L"Creating title font: " << wname << L" size: " << size << std::endl;
+	//std::wcout << L"Creating title font: " << wname << L" size: " << size << std::endl;
 
     titlebar__hTitleFont = CreateFontW(
         size, 0, 0, 0, FW_MEDIUM, false, false, false,
@@ -609,7 +599,7 @@ HL_PRIM void HL_NAME(setTitleFont)(vstring *name, int size = 0) {
         wname.c_str()
     );
     
-    std::wcout << L"Font handle: " << titlebar__hTitleFont << std::endl;
+    //std::wcout << L"Font handle: " << titlebar__hTitleFont << std::endl;
 }
 
 HL_PRIM void HL_NAME(setButtonFont)(vstring *name, int size = 0) {
