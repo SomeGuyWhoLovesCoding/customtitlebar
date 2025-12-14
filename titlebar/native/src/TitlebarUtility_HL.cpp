@@ -9,6 +9,7 @@
 #define HL_NAME(n) titlebar_##n
 
 #include <hl.h>
+#include <string>
 
 #define UNICODE
 #define _UNICODE
@@ -31,7 +32,7 @@ using namespace Gdiplus;
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "msimg32.lib")
 
-// whatever this thing is
+/*// whatever this thing is
 extern "C"
 {
 #ifdef _WIN32
@@ -41,7 +42,7 @@ extern "C"
     void titlebar__initializeNewWndProc();
     void titlebar__registerFontFromPath(vstring *fontPath);
 #endif
-}
+}*/
 
 #ifdef _WIN32
 enum Titlebar__HoverType
@@ -227,11 +228,11 @@ LRESULT CALLBACK titlebar__wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
         GetWindowTextW(hwnd, title, bufsize);
 
         SIZE textSize;
-        HFONT hOldFont;
+        HFONT hOldFont = nullptr;
         if (titlebar__hTitleFont != nullptr)
             hOldFont = (HFONT)SelectObject(hdc, titlebar__hTitleFont);
-        GetTextExtentPoint32W(hdc, title, wcslen(title), &textSize); //new
-        if (titlebar__hTitleFont != nullptr)
+        GetTextExtentPoint32W(hdc, title, wcslen(title), &textSize);
+        if (titlebar__hTitleFont != nullptr && hOldFont != nullptr)
             SelectObject(hdc, hOldFont);
 
         HICON hIcon = titlebar__getCaptionIcon(hwnd);
@@ -254,9 +255,9 @@ LRESULT CALLBACK titlebar__wndProc(HWND hwnd, UINT message, WPARAM wParam, LPARA
         RECT textRect = {(LONG)(x + iconSize + 6), 0, rect.right, (LONG)titlebar__frameDimensions[1]};
 
         if (titlebar__hTitleFont != nullptr)
-            SelectObject(hdc, titlebar__hTitleFont);
+            hOldFont = (HFONT)SelectObject(hdc, titlebar__hTitleFont);
         DrawTextW(hdc, (LPWSTR)title, -1, &textRect, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
-        if (titlebar__hTitleFont != nullptr)
+        if (titlebar__hTitleFont != nullptr && hOldFont != nullptr)
             SelectObject(hdc, hOldFont);
 
         titlebar__drawButtons(hdc, rect, hwnd);
@@ -427,6 +428,7 @@ HL_PRIM void HL_NAME(loadGDI)(_NO_ARG)
     Gdiplus::GdiplusStartupInput gdiplusStartupInput;
     Gdiplus::GdiplusStartup(&m_gdiplusToken, &gdiplusStartupInput, NULL);
 }
+
 HL_PRIM void HL_NAME(initializeNewWndProc)(_NO_ARG)
 {
 #ifdef _WIN32
@@ -446,14 +448,6 @@ HL_PRIM void HL_NAME(initializeNewWndProc)(_NO_ARG)
 
     RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN);
     initialized = true;
-#endif
-}
-
-HL_PRIM void HL_NAME(registerFontFromPath)(vstring *fontPath)
-{
-#ifdef _WIN32
-    LPCSTR path = LPCSTR(hl_aptr(fontPath->bytes, const char));
-    AddFontResourceEx(path, FR_PRIVATE, 0);
 #endif
 }
 
@@ -480,6 +474,24 @@ static std::wstring utf8_to_wide(const char *utf8) {
 }
 
 #ifdef _WIN32
+HL_PRIM void HL_NAME(registerFontFromPath)(vstring *fontPath)
+{
+    //std::cout << "Hello world:" << std::endl;
+    /*std::wstring wpath = utf8_to_wide(hl_to_utf8(fontPath->bytes));
+    std::wcout << wpath << std::endl;
+    const char* path = wpath.c_str();
+    //std::cout << (LPCSTR)path << std::endl;
+    AddFontResourceEx(path, FR_PRIVATE, 0);*/
+    std::wstring wpath = utf8_to_wide(hl_to_utf8(fontPath->bytes));
+    const wchar_t* path = wpath.c_str();
+    std::wcout << path << std::endl;
+
+    std::string utf8name = hl_to_utf8(fontPath->bytes);
+    printf(utf8name.c_str());
+
+    AddFontResourceExW(path, FR_PRIVATE, 0);
+}
+
 HL_PRIM void HL_NAME(setButtonWidth)(int width)
 {
     titlebar__buttonWidth = width;
@@ -581,7 +593,14 @@ HL_PRIM void HL_NAME(setTitleFont)(vstring *name, int size = 0) {
     if (size == 0)
         size = 16;
 
-    std::wstring wname = utf8_to_wide(hl_to_utf8(name->bytes));  // Changed this line
+    if (titlebar__hTitleFont != nullptr) {
+        DeleteObject(titlebar__hTitleFont);
+        titlebar__hTitleFont = nullptr;
+    }
+
+    std::wstring wname = utf8_to_wide(hl_to_utf8(name->bytes));
+    
+    std::wcout << L"Creating title font: " << wname << L" size: " << size << std::endl;
 
     titlebar__hTitleFont = CreateFontW(
         size, 0, 0, 0, FW_MEDIUM, false, false, false,
@@ -589,13 +608,21 @@ HL_PRIM void HL_NAME(setTitleFont)(vstring *name, int size = 0) {
         CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE,
         wname.c_str()
     );
+    
+    std::wcout << L"Font handle: " << titlebar__hTitleFont << std::endl;
 }
 
 HL_PRIM void HL_NAME(setButtonFont)(vstring *name, int size = 0) {
     if (size == 0)
         size = 10;
 
-    std::wstring wname = utf8_to_wide(hl_to_utf8(name->bytes));  // Changed this line
+    // Delete old font first
+    if (titlebar__hButtonFont != nullptr) {
+        DeleteObject(titlebar__hButtonFont);
+        titlebar__hButtonFont = nullptr;
+    }
+
+    std::wstring wname = utf8_to_wide(hl_to_utf8(name->bytes));
 
     titlebar__hButtonFont = CreateFontW(
         size, 0, 0, 0, FW_MEDIUM, false, false, false,
@@ -603,6 +630,7 @@ HL_PRIM void HL_NAME(setButtonFont)(vstring *name, int size = 0) {
         CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE,
         wname.c_str()
     );
+}
 
 HL_PRIM void HL_NAME(redrawWindow)(_NO_ARG)
 {
