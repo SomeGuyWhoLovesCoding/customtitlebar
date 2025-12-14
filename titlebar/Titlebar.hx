@@ -34,10 +34,6 @@ class Titlebar
 		if (initialized)
 			return;
 		TitlebarUtility.initialize();
-		#if lime
-		lime.app.Application.current.window.width++;
-		lime.app.Application.current.window.width--;
-		#end
 		initialized = true;
 	}
 	
