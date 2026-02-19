@@ -46,7 +46,7 @@ extern class TitlebarUtility
 		registerFontFromPath(path);
 		trace(path + "post");
 	}
-	@:hlNative('titlebar', 'registerFontFromPath') public static function registerFont(path:String):Void;
+	@:hlNative('titlebar', 'registerFontFromPath') public static function registerFontFromPath(path:String):Void;
 	@:hlNative('titlebar', 'loadGDI') private static function loadGDI():Void;
 	
 	// customization
@@ -77,3 +77,4 @@ extern class TitlebarUtility
 }
 
 #end
+
