@@ -33,18 +33,6 @@ using namespace Gdiplus;
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "msimg32.lib")
 
-/*// whatever this thing is
-extern "C"
-{
-#ifdef _WIN32
-	__declspec(dllexport) void titlebar__initializeNewWndProc();
-	__declspec(dllexport) void titlebar__registerFontFromPath(vstring *fontPath);
-#else
-	void titlebar__initializeNewWndProc();
-	void titlebar__registerFontFromPath(vstring *fontPath);
-#endif
-}*/
-
 #ifdef _WIN32
 enum Titlebar__HoverType
 {
@@ -443,6 +431,14 @@ HL_PRIM void HL_NAME(initializeNewWndProc)(_NO_ARG)
 											DEFAULT_PITCH | FF_DONTCARE, L"Segoe MDL2 Assets");
 	HWND hwnd = GetActiveWindow();
 	titlebar__originalWndProc = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)titlebar__wndProc);
+
+    // Tell DWM not to round the corners
+    DWM_WINDOW_CORNER_PREFERENCE preference = DWMWCP_DONOTROUND;
+    DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, &preference, sizeof(preference));
+
+    // This is the key one for Windows 10 - disable the rounded corners in the non-client area
+    BOOL enableRound = FALSE;
+    DwmSetWindowAttribute(hwnd, 33, &enableRound, sizeof(enableRound)); // 33 = DWMWA_USE_HOSTBACKDROPBRUSH (undocumented in some SDKs)
 
 	MARGINS margins = {0};
 	DwmExtendFrameIntoClientArea(hwnd, &margins);

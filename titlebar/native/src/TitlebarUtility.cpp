@@ -82,7 +82,7 @@ HBRUSH titlebar__secondaryButtonBrush = nullptr;
 HBRUSH titlebar__primaryButtonHoverBrush = CreateSolidBrush(RGB(55, 40, 42));
 HBRUSH titlebar__secondaryButtonHoverBrush = CreateSolidBrush(RGB(223, 15, 16));
 
-int titlebar__buttonWidth = 32;
+int titlebar__buttonWidth = 45;
 int titlebar__iconSize = 24;
 int titlebar__frameDimensions[4] = {GetSystemMetrics(SM_CXSIZEFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER), GetSystemMetrics(SM_CYSIZEFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER) + GetSystemMetrics(SM_CYCAPTION), GetSystemMetrics(SM_CXSIZEFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER), GetSystemMetrics(SM_CYSIZEFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER)};
 int titlebar__zoomedFrameDimensions[4] = {GetSystemMetrics(SM_CXSIZEFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER), GetSystemMetrics(SM_CYSIZEFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER) + GetSystemMetrics(SM_CYCAPTION), GetSystemMetrics(SM_CXSIZEFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER), GetSystemMetrics(SM_CYSIZEFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER)};
@@ -446,6 +446,14 @@ void titlebar__initializeNewWndProc()
                                             DEFAULT_PITCH | FF_DONTCARE, L"Segoe MDL2 Assets");
     HWND hwnd = GetActiveWindow();
     titlebar__originalWndProc = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)titlebar__wndProc);
+
+    // Tell DWM not to round the corners
+    DWM_WINDOW_CORNER_PREFERENCE preference = DWMWCP_DONOTROUND;
+    DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, &preference, sizeof(preference));
+
+    // This is the key one for Windows 10 - disable the rounded corners in the non-client area
+    BOOL enableRound = FALSE;
+    DwmSetWindowAttribute(hwnd, 33, &enableRound, sizeof(enableRound)); // 33 = DWMWA_USE_HOSTBACKDROPBRUSH (undocumented in some SDKs)
 
     DwmExtendFrameIntoClientArea(hwnd, &titlebar__frameMargins);
 
