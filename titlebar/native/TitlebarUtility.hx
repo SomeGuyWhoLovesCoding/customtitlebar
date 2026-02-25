@@ -7,7 +7,7 @@ package titlebar.native;
 extern class TitlebarUtility
 {
 	@:native('titlebar__initializeNewWndProc') private static function initialize():Void;
-	@:native('titlebar__registerFontFromPath') private static function registerFont(path:String):Void;
+	@:native('titlebar__registerFontFromPath') private static function registerFontFromPath(path:String):Void;
 	@:native('titlebar__loadGDI') private static function loadGDI():Void;
 	
 	// customization
@@ -77,4 +77,5 @@ extern class TitlebarUtility
 }
 
 #end
+
 
