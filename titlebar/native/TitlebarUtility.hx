@@ -41,10 +41,8 @@ extern class TitlebarUtility
 extern class TitlebarUtility
 {
 	@:hlNative('titlebar', 'initializeNewWndProc') public static function initialize():Void;
-	public static function registerFont(path:String):Void {
-		trace(path);
+	public static inline function registerFont(path:String):Void {
 		registerFontFromPath(path);
-		trace(path + "post");
 	}
 	@:hlNative('titlebar', 'registerFontFromPath') public static function registerFontFromPath(path:String):Void;
 	@:hlNative('titlebar', 'loadGDI') private static function loadGDI():Void;
